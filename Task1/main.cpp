@@ -1,6 +1,5 @@
 #include <math.h>
 #include <iostream>
-#include <numeric>
 
 #ifdef VAL_DOUBLE
 #define SIN_TYPE double
@@ -11,14 +10,13 @@
 
 int main(void){
     SIN_TYPE* sins=new SIN_TYPE[OUTPUT_LENGTH];
-    double period = 2*M_PI/OUTPUT_LENGTH;
-    double x=0;
+    const double period = 2*M_PI/OUTPUT_LENGTH;
     SIN_TYPE sum = 0;
-    for(int i=0;i<OUTPUT_LENGTH;++i){
+    double x=0;
+    for(int i=0;i<OUTPUT_LENGTH;++i,x+=period){
         sins[i]=sin(x);
         sum += sins[i];
-        x += period;
     }
-    delete [] sins;
     std::cout << sum << std::endl;
+    delete [] sins;
 }

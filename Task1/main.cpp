@@ -6,6 +6,7 @@
 #else
 #define SIN_TYPE float
 #endif
+
 #define OUTPUT_LENGTH 10000000
 
 int main(void){

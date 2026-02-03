@@ -12,9 +12,8 @@ int main(void){
     SIN_TYPE* sins=new SIN_TYPE[OUTPUT_LENGTH];
     const double period = 2*M_PI/OUTPUT_LENGTH;
     SIN_TYPE sum = 0;
-    double x=0;
-    for(int i=0;i<OUTPUT_LENGTH;++i,x+=period){
-        sins[i]=sin(x);
+    for(int i=0;i<OUTPUT_LENGTH;++i){
+        sins[i]=sin(period*i);
         sum += sins[i];
     }
     std::cout << sum << std::endl;

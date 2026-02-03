@@ -1,0 +1,24 @@
+#include <math.h>
+#include <iostream>
+#include <numeric>
+
+#ifdef VAL_DOUBLE
+#define SIN_TYPE double
+#else
+#define SIN_TYPE float
+#endif
+#define OUTPUT_LENGTH 10000000
+
+int main(void){
+    SIN_TYPE* sins=new SIN_TYPE[OUTPUT_LENGTH];
+    double period = 2*M_PI/OUTPUT_LENGTH;
+    double x=0;
+    SIN_TYPE sum = 0;
+    for(int i=0;i<OUTPUT_LENGTH;++i){
+        sins[i]=sin(x);
+        sum += sins[i];
+        x += period;
+    }
+    delete [] sins;
+    std::cout << sum << std::endl;
+}

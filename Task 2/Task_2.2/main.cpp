@@ -31,7 +31,7 @@ double integrateOMP(double lb, double ub, double segmentCount, double (*func)(do
 int main(void){
     double lb = 0;
     double ub = 2 * M_PI;
-    int threadCounts[8] = {2, 4, 7, 8, 16, 20, 40};
+    int threadCounts[] = {1,2, 4, 7, 8, 16, 20, 40};
     int segmentCount = 40'000'000;
     
     for(int threadCount : threadCounts){

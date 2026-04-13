@@ -18,17 +18,21 @@ std::vector<double> simple_iteration(
     const std::vector<std::vector<double>>& A,
     const std::vector<double>& b,
     double tau = 0.000005,
-    double tol = 1e-7,
+    double tol = 1e-5,
     int max_iter = 100000000)
 {
     int n = A.size();
     std::vector<double> x(n, 0.0);
     std::vector<double> x_new(n, 0.0);
-    double previous_diff = 1.0/0.0;
     
-    for (int iter = 0; iter < max_iter; ++iter)
+    int converged=0;
+    double diff_norm_sq = 0.0;
+    double x_new_norm_sq = 0.0;
+    #pragma omp parallel shared(x,x_new,converged)
     {
-        #pragma omp parallel for
+        for (int iter = 0; iter < max_iter&&!converged; ++iter)
+    {
+        #pragma omp for schedule(static)
         for (int i = 0; i < n; ++i) {
             double sum = 0.0;
             for (int j = 0; j < n; ++j) {
@@ -36,34 +40,43 @@ std::vector<double> simple_iteration(
             }
             x_new[i] = x[i] - tau * (sum - b[i]);
         }
-
-        double max_diff = 0.0;
-        #pragma omp parallel for
-        for (int i = 0; i < n; ++i) {
-            max_diff = std::max(max_diff, std::abs(x_new[i] - x[i]));
+        #pragma omp single
+        {
+            diff_norm_sq = 0.0;
+            x_new_norm_sq = 0.0;
         }
-        
-        if(std::abs(max_diff) > std::abs(previous_diff)){
-            tau = -tau;
+        #pragma omp for reduction(+:diff_norm_sq, x_new_norm_sq)
+        for (int i = 0; i < n;++i) {
+            double d = x_new[i] - x[i];
+            diff_norm_sq += d * d;
+            x_new_norm_sq += x_new[i] * x_new[i];
         }
-        previous_diff = max_diff;
-        
-        if (max_diff < tol) break;
-        x = x_new;
+            
+        #pragma omp single
+        {
+            double diff_norm = std::sqrt(diff_norm_sq);
+            double x_new_norm = std::sqrt(x_new_norm_sq);
+              
+            if (diff_norm < tol * x_new_norm) {
+                converged = 1;           
+            }
+            x = x_new;
+        }
     }
+    }
+    
     return x;
 }
 
 int main() {
-    const int N = 8192;
+    const int N = 5000;
     std::vector<std::vector<double>> A = generateMatrix(N); 
-    std::vector<double> b(N, 17.0);
+    std::vector<double> b(N, N+1);
     
-    std::vector<int> thread_counts(40);
-    std::iota(thread_counts.begin(),thread_counts.end(),1);
+    int thread_counts[] = {1,2, 4, 7, 8, 16, 20, 40,80};
     
-    std::cout << "Thread Count | Time (seconds) | Solution norm\n";
-    std::cout << "-------------|----------------|--------------\n";
+    std::cout << "Thread Count | Time (seconds)\n";
+    std::cout << "-------------|---------------\n";
     
     for (int num_threads : thread_counts) {
         omp_set_num_threads(num_threads);
@@ -74,15 +87,8 @@ int main() {
         
         std::chrono::duration<double> elapsed = end - start;
         
-        double norm = 0.0;
-        for (double val : x) {
-            norm += val * val;
-        }
-        norm = std::sqrt(norm);
-        
         std::cout << std::setw(12) << num_threads << " | " 
-                  << std::setw(14) << std::fixed << std::setprecision(4) << elapsed.count() << " | "
-                  << std::setw(13) << std::scientific << std::setprecision(4) << norm << "\n";
+                  << std::setw(14) << std::fixed << std::setprecision(4) << elapsed.count() << std::endl;
     }
     
     return 0;

@@ -120,7 +120,7 @@ s0_getter_thread.join()
 s1_getter_thread.join()
 s2_getter_thread.join()
 camera_getter_thread.join()
-window.__delete__(None)
-camera.__delete__(None)
+del window
+del camera
     
 
